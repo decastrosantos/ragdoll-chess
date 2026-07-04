@@ -115,30 +115,93 @@ func capture(target_piece: Piece) -> void:
 	target_piece.launch_from(global_position)
 
 
-## DUELO — investidas do atacante: avança rápido na direção do alvo e recua,
-## duas vezes, como golpes de esgrima. Usado antes do arremesso final.
+## DUELO — golpe do atacante. Sorteia um entre QUATRO estilos de ataque
+## para a batalha nunca se repetir:
+##   0: investidas de esgrima (2 golpes médios)
+##   1: rajada (3 golpes rápidos e curtos)
+##   2: pirueta (giro de 360° + golpe pesado)
+##   3: salto-esmagada (sobe no ar e despenca sobre o alvo)
 func attack_flourish(target_position: Vector3) -> void:
+	match randi() % 4:
+		0:
+			await _attack_lunges(target_position, 2, 0.5, 0.1)
+		1:
+			await _attack_lunges(target_position, 3, 0.32, 0.07)
+		2:
+			await _attack_spin(target_position)
+		3:
+			await _attack_slam(target_position)
+
+
+## Investidas: avança `reach` na direção do alvo em `jab_time`s e recua,
+## `count` vezes.
+func _attack_lunges(target_position: Vector3, count: int, reach: float, jab_time: float) -> void:
 	var origin := global_position
-	var dir := target_position - origin
-	dir.y = 0.0
-	dir = dir.normalized()
+	var dir := _flat_dir_to(target_position)
 	var tween := create_tween()
-	for i in 2:
-		tween.tween_property(self, "global_position", origin + dir * 0.5, 0.1) \
+	for i in count:
+		tween.tween_property(self, "global_position", origin + dir * reach, jab_time) \
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-		tween.tween_property(self, "global_position", origin, 0.14) \
+		tween.tween_property(self, "global_position", origin, jab_time * 1.4) \
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	await tween.finished
 
 
-## DUELO — cambaleio do defensor: o visual balança nos golpes, sem sair
-## do lugar, vendendo o impacto antes do voo.
+## Pirueta: giro completo (TAU relativo, preserva a orientação do time)
+## seguido de um golpe pesado.
+func _attack_spin(target_position: Vector3) -> void:
+	var origin := global_position
+	var dir := _flat_dir_to(target_position)
+	var tween := create_tween()
+	tween.tween_property(_visual, "rotation:y", TAU, 0.35).as_relative() \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "global_position", origin + dir * 0.6, 0.09) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_property(self, "global_position", origin, 0.16) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	await tween.finished
+
+
+## Salto-esmagada: sobe em arco na direção do alvo e cai com tudo.
+func _attack_slam(target_position: Vector3) -> void:
+	var origin := global_position
+	var dir := _flat_dir_to(target_position)
+	var tween := create_tween()
+	tween.tween_property(self, "global_position", origin + dir * 0.3 + Vector3.UP * 0.9, 0.2) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(self, "global_position", origin + dir * 0.55, 0.11) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_property(self, "global_position", origin, 0.18) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	await tween.finished
+
+
+func _flat_dir_to(point: Vector3) -> Vector3:
+	var dir := point - global_position
+	dir.y = 0.0
+	return dir.normalized()
+
+
+## DUELO — reação do defensor, também sorteada entre TRÊS estilos:
+##   0: cambaleio (balança de um lado para o outro)
+##   1: tremedeira (vibra no lugar)
+##   2: recuo assustado (inclina para trás e volta com "bounce")
 func flinch() -> void:
 	if _visual == null:
 		return
 	var tween := create_tween()
-	for angle in [0.18, -0.22, 0.15, 0.0]:
-		tween.tween_property(_visual, "rotation:z", angle, 0.11)
+	match randi() % 3:
+		0:
+			for angle in [0.18, -0.22, 0.15, 0.0]:
+				tween.tween_property(_visual, "rotation:z", angle, 0.11)
+		1:
+			for offset in [0.12, -0.12, 0.08, 0.0]:
+				tween.tween_property(_visual, "position:x", offset, 0.07)
+		2:
+			tween.tween_property(_visual, "rotation:x", -0.3, 0.12) \
+				.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			tween.tween_property(_visual, "rotation:x", 0.0, 0.28) \
+				.set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 
 
 ## Ativa a física e arremessa ESTA peça para longe do ponto de ataque.

@@ -28,6 +28,9 @@ const AI_THINK_DELAY := 0.9
 
 var selected_piece: Piece = null
 
+# Dificuldade da IA (enum AiPlayer.Difficulty), lida do menu a cada partida.
+var ai_difficulty: int = AiPlayer.Difficulty.MEDIUM
+
 # Destinos legais da peça selecionada (Array de Vector2i), calculados pelo
 # MoveRules no momento da seleção. Vazio quando nada está selecionado.
 var _legal_moves: Array = []
@@ -43,6 +46,7 @@ func _ready() -> void:
 # ---------------------------------------------------------------------------
 
 func _on_new_game() -> void:
+	ai_difficulty = ui.get_difficulty()
 	_clear_pieces()
 	_spawn_initial_pieces()
 	state_machine.reset()
@@ -246,7 +250,7 @@ func _play_ai_turn() -> void:
 		if piece and not piece.is_white and board.is_inside(piece.grid_pos) \
 				and board.get_piece_at(piece.grid_pos) == piece:
 			my_pieces.append(piece)
-	var move: Dictionary = AiPlayer.choose_move(board, my_pieces)
+	var move: Dictionary = AiPlayer.choose_move(board, my_pieces, ai_difficulty)
 	if move.is_empty():
 		# IA sem movimentos legais: encerra a partida.
 		state_machine.game_over()
