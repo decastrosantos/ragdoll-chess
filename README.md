@@ -9,6 +9,7 @@ Protótipo de **Battle Chess 3D** com física exagerada e humor, feito na **Godo
 - **Captura**: a vítima vira corpo físico ativo (`freeze = false`) e é arremessada para fora do tabuleiro com `apply_central_impulse` + torque aleatório, poeira de partículas e **zoom dinâmico de câmera**.
 - **State Machine**: Turno das Brancas → Animação/Combate → Turno das Pretas.
 - **i18n desde o dia 1**: Português, English, Español — zero strings hardcoded; tudo passa pelo `TranslationServer` (`localization/translations.csv`).
+- **Peças com identidade** (`scripts/view/piece_factory.gd`): cada tipo tem silhueta própria em estilo cartoon "chunky" — peão redondinho, torre com ameias, cavalo com cabeça e orelhas, bispo com mitra, rainha com coroa de pontas, rei com cruz — com detalhes dourados. Placeholders procedurais prontos para serem trocados por modelos GLB de artista.
 - **Movimentos legais** por tipo de peça (`scripts/logic/move_rules.gd`): bloqueios, capturas, avanço duplo do peão e promoção automática a dama. Casas válidas ficam destacadas (verde = mover, vermelho = capturar).
 - ⚠️ Sem xeque, roque ou en passant por enquanto — no estilo Battle Chess, a partida termina com a **captura física do rei**.
 

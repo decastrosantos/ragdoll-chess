@@ -24,18 +24,10 @@ const CAPTURE_UP_FACTOR := 0.55   # componente vertical adicionada à direção
 const TORQUE_IMPULSE_MAX := 18.0  # giro aleatório para efeito cômico
 const DESPAWN_DELAY := 3.5        # segundos até a vítima sumir da cena
 
-# Escala de altura por tipo de peça (placeholders low-poly; o rei é o mais alto).
-const TYPE_HEIGHT_SCALE := {
-	Type.PAWN: 0.7,
-	Type.ROOK: 0.9,
-	Type.KNIGHT: 1.0,
-	Type.BISHOP: 1.1,
-	Type.QUEEN: 1.25,
-	Type.KING: 1.4,
-}
-
-const COLOR_WHITE := Color(0.92, 0.88, 0.78)  # marfim
-const COLOR_BLACK := Color(0.20, 0.18, 0.16)  # pedra escura
+# Paleta cartoon: times saturados + detalhes dourados (coroas, orelhas, cruz).
+const COLOR_WHITE := Color(0.95, 0.91, 0.78)   # creme
+const COLOR_BLACK := Color(0.23, 0.22, 0.32)   # ardósia arroxeada
+const COLOR_ACCENT := Color(1.0, 0.76, 0.22)   # dourado
 const SELECTED_EMISSION := Color(1.0, 0.85, 0.2)
 
 var type: int = Type.PAWN
@@ -43,8 +35,8 @@ var is_white := true
 var grid_pos := Vector2i.ZERO
 
 var _material: StandardMaterial3D
+var _visual: Node3D
 
-@onready var _mesh: MeshInstance3D = $Mesh
 @onready var _particles: GPUParticles3D = $CaptureParticles
 
 
@@ -55,16 +47,26 @@ func setup(piece_type: int, white: bool, cell: Vector2i) -> void:
 	grid_pos = cell
 	name = "%s_%s_%d_%d" % [Type.keys()[type], "W" if white else "B", cell.x, cell.y]
 
-	# Placeholder visual: cápsula low-poly esticada conforme o tipo.
-	var height_scale: float = TYPE_HEIGHT_SCALE[type]
-	_mesh.scale = Vector3(0.9, height_scale, 0.9)
-	_mesh.position = Vector3(0.0, 0.8 * height_scale, 0.0)
+	# (Re)constrói o visual — também usado na promoção do peão.
+	if _visual:
+		_visual.queue_free()
 
 	_material = StandardMaterial3D.new()
 	_material.albedo_color = COLOR_WHITE if white else COLOR_BLACK
+	_material.roughness = 0.55
 	_material.emission = SELECTED_EMISSION
 	_material.emission_enabled = false
-	_mesh.material_override = _material
+
+	var accent := StandardMaterial3D.new()
+	accent.albedo_color = COLOR_ACCENT
+	accent.roughness = 0.35
+
+	# Cada tipo tem silhueta própria (peão, torre, cavalo, bispo, dama, rei).
+	_visual = PieceFactory.build(type, _material, accent)
+	# Brancas encaram -Z (o lado inimigo); pretas, +Z. Importa para o cavalo,
+	# cuja cabeça aponta para a frente.
+	_visual.rotation.y = PI if white else 0.0
+	add_child(_visual)
 
 
 ## Realce visual da peça selecionada (emissão dourada).
