@@ -35,6 +35,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Disponibilizar export templates no HOME do runner
+        # A imagem godot-ci instala os templates em /root/.local/..., mas o
+        # GitHub Actions redefine HOME para /github/home dentro do container.
+        # Sem este passo o export falha com "No export template found".
+        run: |
+          mkdir -p ~/.local/share/godot/export_templates
+          mv /root/.local/share/godot/export_templates/* ~/.local/share/godot/export_templates/
+
       - name: Importar assets (gera .godot/ e compila as traduções do CSV)
         # A primeira importação pode reclamar de recursos ainda não gerados
         # (ex.: *.translation) — por isso roda duas vezes e tolera falhas.
