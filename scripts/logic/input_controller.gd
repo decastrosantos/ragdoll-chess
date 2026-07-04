@@ -1,9 +1,9 @@
 extends Node3D
 ## Controlador principal (nó raiz da cena Main).
 ##
-## Orquestra: input do jogador (raycast de clique), regras mínimas do protótipo
-## (qualquer peça move para qualquer casa — as regras reais do xadrez virão
-## depois), atualização da matriz do tabuleiro, máquina de estados e câmera.
+## Orquestra: input do jogador (raycast de clique), validação de destinos via
+## MoveRules (movimentos legais por tipo de peça), atualização da matriz do
+## tabuleiro, máquina de estados e câmera.
 
 const PIECE_SCENE := preload("res://scenes/pieces/piece_base.tscn")
 const RAY_LENGTH := 200.0
@@ -25,6 +25,10 @@ const COMBAT_LINGER := 1.4
 
 var selected_piece: Piece = null
 
+# Destinos legais da peça selecionada (Array de Vector2i), calculados pelo
+# MoveRules no momento da seleção. Vazio quando nada está selecionado.
+var _legal_moves: Array = []
+
 
 func _ready() -> void:
 	ui.new_game_pressed.connect(_on_new_game)
@@ -43,6 +47,8 @@ func _on_new_game() -> void:
 
 func _clear_pieces() -> void:
 	selected_piece = null
+	_legal_moves = []
+	board.clear_highlights()
 	for child in pieces_root.get_children():
 		child.queue_free()
 	board.reset()
@@ -100,26 +106,33 @@ func _on_piece_clicked(piece: Piece) -> void:
 	if piece.is_white == state_machine.is_white_turn():
 		# Peça do jogador da vez: seleciona (ou troca a seleção).
 		_select(null if piece == selected_piece else piece)
-	elif selected_piece:
-		# Peça inimiga com uma peça já selecionada: CAPTURA!
+	elif selected_piece and piece.grid_pos in _legal_moves:
+		# Peça inimiga em casa alcançável: CAPTURA!
 		_execute_move(piece.grid_pos)
 
 
 func _on_cell_clicked(cell: Vector2i) -> void:
 	if selected_piece == null:
 		return
-	if cell == selected_piece.grid_pos:
+	if cell in _legal_moves:
+		_execute_move(cell)
+	else:
+		# Clique fora dos destinos legais (inclui a própria casa): deseleciona.
 		_select(null)
-		return
-	_execute_move(cell)
 
 
+## Seleciona/deseleciona uma peça. Ao selecionar, consulta o MoveRules e
+## acende os marcadores das casas legais no tabuleiro.
 func _select(piece: Piece) -> void:
 	if selected_piece:
 		selected_piece.set_selected(false)
 	selected_piece = piece
+	_legal_moves = []
+	board.clear_highlights()
 	if piece:
 		piece.set_selected(true)
+		_legal_moves = MoveRules.get_legal_moves(piece, board)
+		board.show_highlights(_legal_moves)
 
 
 # ---------------------------------------------------------------------------
@@ -145,7 +158,18 @@ func _execute_move(cell: Vector2i) -> void:
 	else:
 		attacker.move_to(board.grid_to_world(cell))
 		await attacker.move_finished
+		_maybe_promote(attacker)
 		state_machine.end_action()
+
+
+## Promoção: peão que alcança a última fileira (row 0 para brancas,
+## row 7 para pretas) vira dama automaticamente.
+func _maybe_promote(piece: Piece) -> void:
+	if piece.type != Piece.Type.PAWN:
+		return
+	var last_row := 0 if piece.is_white else 7
+	if piece.grid_pos.y == last_row:
+		piece.promote_to(Piece.Type.QUEEN)
 
 
 ## Sequência cinematográfica da captura:
@@ -160,6 +184,7 @@ func _play_combat(attacker: Piece, target: Piece, cell: Vector2i) -> void:
 
 	var was_king := target.type == Piece.Type.KING
 	attacker.capture(target)
+	_maybe_promote(attacker)
 	ui.set_status("MSG_PIECE_CAPTURED")
 
 	await get_tree().create_timer(COMBAT_LINGER).timeout

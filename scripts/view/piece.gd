@@ -73,6 +73,13 @@ func set_selected(selected: bool) -> void:
 		_material.emission_enabled = selected
 
 
+## Promoção (peão que alcança a última fileira vira dama).
+## Reaproveita setup(): reconstrói nome, escala e material; cor e célula
+## lógica são preservadas.
+func promote_to(new_type: int) -> void:
+	setup(new_type, is_white, grid_pos)
+
+
 # ---------------------------------------------------------------------------
 # MOVIMENTO — deslize com pulo em arco (Tween)
 # ---------------------------------------------------------------------------

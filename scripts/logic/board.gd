@@ -18,8 +18,18 @@ const TILE_THICKNESS := 0.5     # Espessura do tampo do tabuleiro
 const COLOR_LIGHT := Color(0.85, 0.78, 0.66)  # "madeira clara"
 const COLOR_DARK := Color(0.36, 0.26, 0.20)   # "madeira escura"
 
+# Destaques de movimento: verde = casa livre, vermelho = captura possível.
+const COLOR_MOVE_HIGHLIGHT := Color(0.35, 0.85, 0.4, 0.55)
+const COLOR_CAPTURE_HIGHLIGHT := Color(0.9, 0.25, 0.2, 0.6)
+
 # Matriz 8x8 de referências a Piece (ou null). Indexada como _grid[row][col].
 var _grid: Array = []
+
+# Marcadores visuais de destino legal atualmente exibidos.
+var _highlights: Array = []
+var _highlight_mesh: PlaneMesh
+var _highlight_move_material: StandardMaterial3D
+var _highlight_capture_material: StandardMaterial3D
 
 
 func _ready() -> void:
@@ -132,3 +142,59 @@ func _build_click_surface() -> void:
 	body.add_child(shape)
 	add_child(body)
 	body.position = Vector3(0.0, -TILE_THICKNESS * 0.5, 0.0)
+
+
+# ---------------------------------------------------------------------------
+# DESTAQUES DE MOVIMENTO LEGAL (marcadores translúcidos sobre as casas)
+# ---------------------------------------------------------------------------
+
+## Exibe um marcador em cada célula de `cells` (Array de Vector2i).
+## Casa ocupada por inimigo ganha a cor de captura; casa vazia, a de movimento.
+func show_highlights(cells: Array) -> void:
+	clear_highlights()
+	for cell in cells:
+		var marker := MeshInstance3D.new()
+		marker.mesh = _get_highlight_mesh()
+		marker.material_override = (
+			_get_capture_material() if get_piece_at(cell) != null
+			else _get_move_material()
+		)
+		# Levemente acima do tampo (y = 0.03) para não "brigar" com a casa
+		# (z-fighting) e ainda ficar sob os pés das peças.
+		marker.position = grid_to_world(cell) + Vector3(0.0, 0.03, 0.0)
+		add_child(marker)
+		_highlights.append(marker)
+
+
+func clear_highlights() -> void:
+	for marker in _highlights:
+		marker.queue_free()
+	_highlights = []
+
+
+func _get_highlight_mesh() -> PlaneMesh:
+	if _highlight_mesh == null:
+		_highlight_mesh = PlaneMesh.new()
+		# Um pouco menor que a casa para o marcador ler como "alvo", não "piso".
+		_highlight_mesh.size = Vector2(CELL_SIZE * 0.82, CELL_SIZE * 0.82)
+	return _highlight_mesh
+
+
+func _get_move_material() -> StandardMaterial3D:
+	if _highlight_move_material == null:
+		_highlight_move_material = _make_highlight_material(COLOR_MOVE_HIGHLIGHT)
+	return _highlight_move_material
+
+
+func _get_capture_material() -> StandardMaterial3D:
+	if _highlight_capture_material == null:
+		_highlight_capture_material = _make_highlight_material(COLOR_CAPTURE_HIGHLIGHT)
+	return _highlight_capture_material
+
+
+func _make_highlight_material(color: Color) -> StandardMaterial3D:
+	var material := StandardMaterial3D.new()
+	material.albedo_color = color
+	material.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	return material
