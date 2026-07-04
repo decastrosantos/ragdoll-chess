@@ -21,6 +21,7 @@ const LOCALES: Array = [
 
 @onready var _menu_panel: CenterContainer = $MenuPanel
 @onready var _status_label: Label = $StatusLabel
+@onready var _footer_label: Label = $FooterLabel
 @onready var _new_game_button: Button = $MenuPanel/Panel/Margin/VBox/NewGameButton
 @onready var _lang_option: OptionButton = $MenuPanel/Panel/Margin/VBox/LangRow/LangOption
 
@@ -36,7 +37,9 @@ func _ready() -> void:
 
 
 func _on_new_game_pressed() -> void:
+	# O rodapé de créditos pertence à tela inicial: some junto com o menu.
 	_menu_panel.hide()
+	_footer_label.hide()
 	new_game_pressed.emit()
 
 
@@ -51,7 +54,8 @@ func set_status(translation_key: String) -> void:
 	_status_label.text = translation_key
 
 
-## Fim de jogo: exibe o xeque-mate e reabre o menu.
+## Fim de jogo: exibe o xeque-mate e reabre o menu (com o rodapé).
 func show_game_over() -> void:
 	set_status("MSG_CHECKMATE")
 	_menu_panel.show()
+	_footer_label.show()

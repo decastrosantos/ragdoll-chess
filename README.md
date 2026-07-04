@@ -38,3 +38,7 @@ Configuração única no repositório do GitHub:
 2. Em **Settings → Pages → Build and deployment → Source**, escolha **GitHub Actions**.
 
 > O preset Web usa `thread_support=false` de propósito: builds com threads exigem headers COOP/COEP que o GitHub Pages não fornece. Sem threads, o jogo roda no Pages e no Safari/iOS sem gambiarras.
+
+---
+
+Criado por Gustavo de Castro · © 2026
