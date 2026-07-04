@@ -1,0 +1,21 @@
+# --- Godot 4 ---
+# Cache interno do editor (nunca versionar)
+.godot/
+.import/
+
+# Builds exportados
+build/
+*.apk
+*.aab
+*.ipa
+*.exe
+*.pck
+*.zip
+
+# Traduções compiladas — são geradas automaticamente a partir do
+# localization/translations.csv quando o Godot importa o projeto.
+*.translation
+
+# --- Sistema operacional ---
+.DS_Store
+Thumbs.db

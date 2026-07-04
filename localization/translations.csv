@@ -1,0 +1,13 @@
+keys,pt,en,es
+GAME_TITLE,Ragdoll Chess,Ragdoll Chess,Ragdoll Chess
+UI_NEW_GAME,Novo Jogo,New Game,Nuevo Juego
+UI_SETTINGS,Configurações,Settings,Configuración
+UI_LANGUAGE,Idioma,Language,Idioma
+UI_QUIT,Sair,Quit,Salir
+MSG_WHITE_TURN,Turno das Brancas,White's Turn,Turno de las Blancas
+MSG_BLACK_TURN,Turno das Pretas,Black's Turn,Turno de las Negras
+MSG_PIECE_CAPTURED,Peça capturada!,Piece captured!,¡Pieza capturada!
+MSG_CHECKMATE,Xeque-mate!,Checkmate!,¡Jaque mate!
+LANG_PT,Português,Português,Português
+LANG_EN,English,English,English
+LANG_ES,Español,Español,Español

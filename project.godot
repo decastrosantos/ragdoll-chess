@@ -1,0 +1,28 @@
+; Engine configuration file.
+; Projeto: Ragdoll Chess (Battle Chess 3D)
+; Godot 4.3+ — renderer "mobile" (melhor performance em Web e celulares)
+
+config_version=5
+
+[application]
+
+config/name="Ragdoll Chess"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.3", "Mobile")
+config/icon="res://icon.svg"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://localization/translations.pt.translation", "res://localization/translations.en.translation", "res://localization/translations.es.translation")
+locale/fallback="pt"
+
+[rendering]
+
+renderer/rendering_method="mobile"

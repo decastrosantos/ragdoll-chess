@@ -1,0 +1,65 @@
+# CI/CD: exporta o jogo para Web (HTML5) e publica no GitHub Pages
+# a cada push na branch main.
+#
+# IMPORTANTE (por que "thread_support=false" no export_presets.cfg):
+# builds Web do Godot 4 com threads exigem headers COOP/COEP
+# (Cross-Origin Isolation), que o GitHub Pages NÃO permite configurar.
+# Com threads desabilitadas (Godot 4.3+), o jogo roda no Pages sem
+# nenhum header especial — e ainda ganha compatibilidade com Safari/iOS.
+
+name: Build Web & Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Exportar para Web (HTML5)
+    runs-on: ubuntu-latest
+    container:
+      # Imagem com o editor headless do Godot + export templates pré-instalados.
+      # Manter a versão SINCRONIZADA com a versão usada no desenvolvimento.
+      image: barichello/godot-ci:4.3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Importar assets (gera .godot/ e compila as traduções do CSV)
+        # A primeira importação pode reclamar de recursos ainda não gerados
+        # (ex.: *.translation) — por isso roda duas vezes e tolera falhas.
+        run: |
+          godot --headless --import || true
+          godot --headless --import || true
+
+      - name: Exportar Web (release)
+        run: |
+          mkdir -p build/web
+          godot --headless --export-release "Web" build/web/index.html
+
+      - name: Upload do artefato para o Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    name: Publicar no GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
