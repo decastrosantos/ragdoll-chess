@@ -32,7 +32,7 @@ script = ExtResource("2_board")
 [node name="Pieces" type="Node3D" parent="."]
 
 [node name="BattleCamera" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, 9.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.5, 11)
 script = ExtResource("4_cam")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]

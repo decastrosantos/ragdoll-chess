@@ -15,8 +15,10 @@ const BOARD_SIZE := 8
 const CELL_SIZE := 2.0          # Largura de cada casa em metros (unidades 3D)
 const TILE_THICKNESS := 0.5     # Espessura do tampo do tabuleiro
 
-const COLOR_LIGHT := Color(0.85, 0.78, 0.66)  # "madeira clara"
-const COLOR_DARK := Color(0.36, 0.26, 0.20)   # "madeira escura"
+# Paleta clássica (referência: Chess Ultra): casas brancas e quase-pretas.
+const COLOR_LIGHT := Color(0.91, 0.89, 0.85)  # branco marfim
+const COLOR_DARK := Color(0.11, 0.11, 0.12)   # preto grafite
+const COLOR_FRAME := Color(0.13, 0.1, 0.08)   # moldura em madeira escura
 
 # Destaques de movimento: verde = casa livre, vermelho = captura possível.
 const COLOR_MOVE_HIGHLIGHT := Color(0.35, 0.85, 0.4, 0.55)
@@ -35,6 +37,7 @@ var _highlight_capture_material: StandardMaterial3D
 func _ready() -> void:
 	reset()
 	_build_visual_tiles()
+	_build_frame()
 	_build_click_surface()
 
 
@@ -125,8 +128,24 @@ func _make_tile_mesh(color: Color) -> BoxMesh:
 	mesh.size = Vector3(CELL_SIZE, TILE_THICKNESS, CELL_SIZE)
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
+	material.roughness = 0.35  # tampo polido/envernizado
 	mesh.material = material
 	return mesh
+
+
+## Moldura escura ao redor do tampo, como um tabuleiro de madeira real.
+## Levemente mais baixa que as casas para criar um degrau de borda.
+func _build_frame() -> void:
+	var frame := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(BOARD_SIZE * CELL_SIZE + 1.6, 0.5, BOARD_SIZE * CELL_SIZE + 1.6)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = COLOR_FRAME
+	material.roughness = 0.4
+	mesh.material = material
+	frame.mesh = mesh
+	frame.position = Vector3(0.0, -0.3, 0.0)
+	add_child(frame)
 
 
 ## Um único StaticBody3D cobrindo o tabuleiro inteiro serve para:

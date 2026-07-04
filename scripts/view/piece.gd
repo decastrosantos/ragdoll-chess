@@ -24,10 +24,9 @@ const CAPTURE_UP_FACTOR := 0.55   # componente vertical adicionada à direção
 const TORQUE_IMPULSE_MAX := 18.0  # giro aleatório para efeito cômico
 const DESPAWN_DELAY := 3.5        # segundos até a vítima sumir da cena
 
-# Paleta cartoon: times saturados + detalhes dourados (coroas, orelhas, cruz).
-const COLOR_WHITE := Color(0.95, 0.91, 0.78)   # creme
-const COLOR_BLACK := Color(0.23, 0.22, 0.32)   # ardósia arroxeada
-const COLOR_ACCENT := Color(1.0, 0.76, 0.22)   # dourado
+# Paleta clássica polida (referência: Chess Ultra): marfim vs. vermelho laca.
+const COLOR_WHITE := Color(0.93, 0.89, 0.8)    # marfim
+const COLOR_BLACK := Color(0.68, 0.12, 0.1)    # vermelho laca (time "preto")
 const SELECTED_EMISSION := Color(1.0, 0.85, 0.2)
 
 var type: int = Type.PAWN
@@ -53,13 +52,14 @@ func setup(piece_type: int, white: bool, cell: Vector2i) -> void:
 
 	_material = StandardMaterial3D.new()
 	_material.albedo_color = COLOR_WHITE if white else COLOR_BLACK
-	_material.roughness = 0.55
+	_material.roughness = 0.3  # acabamento polido, como peças de resina/madeira lacada
 	_material.emission = SELECTED_EMISSION
 	_material.emission_enabled = false
 
+	# Detalhes num tom mais escuro do próprio time (visual clássico monocromático).
 	var accent := StandardMaterial3D.new()
-	accent.albedo_color = COLOR_ACCENT
-	accent.roughness = 0.35
+	accent.albedo_color = _material.albedo_color.darkened(0.28)
+	accent.roughness = 0.3
 
 	# Cada tipo tem silhueta própria (peão, torre, cavalo, bispo, dama, rei).
 	_visual = PieceFactory.build(type, _material, accent)
@@ -113,6 +113,32 @@ func _move_step(t: float, start: Vector3, target: Vector3) -> void:
 ## passando a própria posição como origem do golpe.
 func capture(target_piece: Piece) -> void:
 	target_piece.launch_from(global_position)
+
+
+## DUELO — investidas do atacante: avança rápido na direção do alvo e recua,
+## duas vezes, como golpes de esgrima. Usado antes do arremesso final.
+func attack_flourish(target_position: Vector3) -> void:
+	var origin := global_position
+	var dir := target_position - origin
+	dir.y = 0.0
+	dir = dir.normalized()
+	var tween := create_tween()
+	for i in 2:
+		tween.tween_property(self, "global_position", origin + dir * 0.5, 0.1) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tween.tween_property(self, "global_position", origin, 0.14) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	await tween.finished
+
+
+## DUELO — cambaleio do defensor: o visual balança nos golpes, sem sair
+## do lugar, vendendo o impacto antes do voo.
+func flinch() -> void:
+	if _visual == null:
+		return
+	var tween := create_tween()
+	for angle in [0.18, -0.22, 0.15, 0.0]:
+		tween.tween_property(_visual, "rotation:z", angle, 0.11)
 
 
 ## Ativa a física e arremessa ESTA peça para longe do ponto de ataque.
