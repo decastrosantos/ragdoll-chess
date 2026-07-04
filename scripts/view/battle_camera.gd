@@ -7,7 +7,8 @@ extends Camera3D
 ##  - Foco de combate: mergulha até perto da casa onde a captura acontece.
 ## As transições interpolam posição E ponto de mira simultaneamente (Tween).
 
-const OVERVIEW_POSITION := Vector3(0.0, 17.0, 13.0)  # ~52° de inclinação
+# Mais perto = tabuleiro grande na tela (antes: 0,17,13 — ficava pequeno).
+const OVERVIEW_POSITION := Vector3(0.0, 12.0, 9.5)
 const OVERVIEW_TARGET := Vector3.ZERO                # centro do tabuleiro
 const FOCUS_OFFSET := Vector3(0.0, 4.5, 5.0)         # deslocamento relativo à casa focada
 const ZOOM_DURATION := 0.6
